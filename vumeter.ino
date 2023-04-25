@@ -7,7 +7,7 @@
 
 #define SAMPLES         512          // Must be a power of 2
 #define SAMPLING_FREQ   10000 // Hz, must be 40000 or less due to ADC conversion time. Determines maximum frequency that can be analysed by the FFT Fmax=sampleF/2.
-#define AMPLITUDE       590          // Depending on your audio source level, you may need to alter this value. Can be used as a 'sensitivity' control.
+#define AMPLITUDE       400          // Depending on your audio source level, you may need to alter this value. Can be used as a 'sensitivity' control.
 #define AUDIO_IN_PIN    A0            // Signal in on this pin
 #define LED_PIN         5             // LED strip data
 #define BTN_PIN         4             // Connect a push button to this pin to change patterns
@@ -19,8 +19,8 @@ const int BRIGHTNESS_SETTINGS[3] = {5, 70, 200};  // 3 Integer array for 3 brigh
 #define LED_VOLTS       5             // Usually 5 or 12
 #define NUM_BANDS       16            // To change this, you will need to change the bunch of if statements describing the mapping from bins to bands
 #define NOISE           0        // Used as a crude noise filter, values below this are ignored
-const uint8_t kMatrixWidth = 8;                          // Matrix width
-const uint8_t kMatrixHeight = 32;                         // Matrix height
+const uint8_t kMatrixWidth = 16;                          // Matrix width
+const uint8_t kMatrixHeight = 16;                         // Matrix height
 #define NUM_LEDS       (kMatrixWidth * kMatrixHeight)     // Total number of LEDs
 #define BAR_WIDTH      (kMatrixHeight  / (NUM_BANDS - 1))  // If width >= 8 light 1 LED width per bar, >= 16 light 2 LEDs width bar etc
 #define TOP            (kMatrixHeight - 0)                // Don't allow the bars to go offscreen
@@ -128,22 +128,37 @@ void loop() {
   // Compute FFT
   fft_execute(real_fft_plan);
 
-  // Analyse FFT results
-  for (int i = 2; i < (SAMPLES / 2); i++) {    // Don't use sample 0 and only first SAMPLES/2 are usable. Each array element represents a frequency bin and its value the amplitude.
-    // Serial.println(abs(vReal[i]));
-    if (abs(vReal[i]) > NOISE) {                    // Add a crude noise filter
-      //8 bands, 12kHz top band
-      real_fft_plan->output[i] = abs(real_fft_plan->output[i]);
+   // Analyse FFT results
+  for (int i = 2; i < (SAMPLES/2); i++){       // Don't use sample 0 and only first SAMPLES/2 are usable. Each array element represents a frequency bin and its value the amplitude.
+    if (vReal[i] > NOISE) {                    // Add a crude noise filter
+   
+    /*8 bands, 12kHz top band
+      if (i<=3 )           bandValues[0]  += (int)vReal[i];
+      if (i>3   && i<=6  ) bandValues[1]  += (int)vReal[i];
+      if (i>6   && i<=13 ) bandValues[2]  += (int)vReal[i];
+      if (i>13  && i<=27 ) bandValues[3]  += (int)vReal[i];
+      if (i>27  && i<=55 ) bandValues[4]  += (int)vReal[i];
+      if (i>55  && i<=112) bandValues[5]  += (int)vReal[i];
+      if (i>112 && i<=229) bandValues[6]  += (int)vReal[i];
+      if (i>229          ) bandValues[7]  += (int)vReal[i];*/
 
-      //16 bands, 12kHz top band
-      int bandLimits[] = {3, 3, 4, 6, 8, 11, 15, 21, 30, 41, 58, 81, 113, 157, 220};
-      int numBands = sizeof(bandLimits) / sizeof(int);
-
-      for (int i = 0; i < numBands; i++) {
-        for (int j = (i == 0 ? 0 : bandLimits[i - 1] + 1); j <= bandLimits[i]; j++) {
-          bandValues[i] += (int)real_fft_plan->output[j] * (j <= 3 ? 10 : j <= 6 ? 5 : j <= 8 ? 4 : 1);
-        }
-      }
+    //16 bands, 12kHz top band
+      if (i<=2 )           bandValues[0]  +=   real_fft_plan->output[i];
+      if (i>2   && i<=3  ) bandValues[1]  +=   real_fft_plan->output[i];
+      if (i>3   && i<=5  ) bandValues[2]  +=   real_fft_plan->output[i];
+      if (i>5   && i<=7  ) bandValues[3]  +=   real_fft_plan->output[i];
+      if (i>7   && i<=9  ) bandValues[4]  +=   real_fft_plan->output[i];
+      if (i>9   && i<=13 ) bandValues[5]  +=   real_fft_plan->output[i];
+      if (i>13  && i<=18 ) bandValues[6]  +=   real_fft_plan->output[i];
+      if (i>18  && i<=25 ) bandValues[7]  +=   real_fft_plan->output[i];
+      if (i>25  && i<=36 ) bandValues[8]  +=   real_fft_plan->output[i];
+      if (i>36  && i<=50 ) bandValues[9]  +=  real_fft_plan->output[i];
+      if (i>50  && i<=69 ) bandValues[10] +=   real_fft_plan->output[i];
+      if (i>69  && i<=97 ) bandValues[11] +=   real_fft_plan->output[i];
+      if (i>97  && i<=135) bandValues[12] +=   real_fft_plan->output[i];
+      if (i>135 && i<=189) bandValues[13] +=   real_fft_plan->output[i];
+      if (i>189 && i<=264) bandValues[14] +=   real_fft_plan->output[i];
+      if (i>264          ) bandValues[15] +=  real_fft_plan->output[i];
     }
   }
 
